@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Python virtual environment
+venv/
+.venv/
+env/
+ENV/
+new_fresh_venv/
+test_drf_gis_venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and OS specific files
+.idea/
+.vscode/
+*.swp
+*~
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Local settings (if any)
+local_settings.py
+.env
+
+# Downloaded archives (if you saved them in project root)
+*.zip
+*.whl
+*.tar.gz
+drf-gis-source-extracted/
+drf-gis-1.1-extracted/
+DRF_GIS_SOURCE_OFFICIAL/
+django-rest-framework-gis-1.0.0/ # example of extracted source folder
+
+# Static and media files collected by collectstatic (if configured and run locally)
+# staticfiles_collected/
+# mediafiles/
+
+# SQLite database (if you used it for local testing)
+*.sqlite3
+db.sqlite3
+
+# Other temporary or sensitive files
+*.log
+*.bak
