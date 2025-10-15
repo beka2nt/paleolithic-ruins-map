@@ -1,4 +1,4 @@
-# .gitignore 文件
+# .gitignore
 
 # 字节码和缓存
 __pycache__/
@@ -23,6 +23,7 @@ ENV/
 *.log
 db.sqlite3
 .env
+_env.bak
 
 # 操作系统文件
 .DS_Store
@@ -35,6 +36,3 @@ staticfiles/
 /build/
 /dist/
 *.egg-info/
-
-# 媒体文件 (通常不加入版本控制，除非是必要的默认图片)
-/mediafiles/
