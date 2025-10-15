@@ -1,6 +1,4 @@
-# docker-compose.yml (最终版)
-
-# 'version' 属性已过时，现代 Docker Compose 不需要它，故移除
+# docker-compose.yml
 
 services:
   db:

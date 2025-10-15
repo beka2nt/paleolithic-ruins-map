@@ -74,7 +74,7 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'ruins_db',
         'USER': 'postgres',
-        'PASSWORD': 'postgres123!', # 确保这是您在 pgAdmin 中设置的正确密码
+        'PASSWORD': 'postgres123!',
         'HOST': 'localhost',
         'PORT': '5432',
     }
