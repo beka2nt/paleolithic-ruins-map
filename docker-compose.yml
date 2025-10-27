@@ -1,0 +1,57 @@
+# docker-compose.yml
+
+services:
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: ${PROJECT_NAME}_db
+    volumes:
+      # 1. 改回使用 Docker 自动管理的新数据卷 'postgres_data'
+      - postgres_data:/var/lib/postgresql/data/
+      # 2. 新增：将本地的数据库备份文件挂载到容器内部，以便恢复
+      - ./ruins_db_backup.tar:/backups/ruins_db_backup.tar
+    environment:
+      # 从 .env 文件读取数据库的用户名、密码和数据库名
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      # 将数据库端口暴露到主机，方便使用 pgAdmin 等工具连接调试 (可选)
+      - "15433:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web: # Django 应用服务
+    build: .
+    container_name: ${PROJECT_NAME}_web
+    # command 命令已移至 entrypoint.sh，以实现更健壮的启动流程
+    volumes:
+      # 将本地代码挂载到容器，方便开发时修改代码立即生效
+      - .:/app
+      # 将静态文件和媒体文件目录挂载到命名的卷，实现数据持久化
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+    ports:
+      # 使用 .env 文件中定义的端口 (例如 8888)，避免冲突
+      - "${DJANGO_PORT}:8000"
+    environment:
+      # 从 .env 文件读取 Django 配置
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      # 构建数据库连接URL，供 Django 应用使用
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        # 等待 db 服务健康检查通过后再启动 web 服务
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  # 3. 定义 Docker 自动管理的新数据卷
+  postgres_data:
+  static_volume:
+  media_volume:

@@ -1,0 +1,74 @@
+# .gitignore (最终版)
+
+### Python ###
+# 字节码和缓存文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python 虚拟环境
+# 这是一个巨大的文件夹，仅用于本地开发，绝不能上传
+venv/
+.venv/
+env/
+ENV/
+
+# Python 打包和分发产物
+/build/
+/dist/
+*.egg-info/
+
+
+### Django ###
+# 本地配置文件和敏感信息
+# .env 文件包含数据库密码和 SECRET_KEY，绝对不能上传！
+.env
+_env.bak
+
+# 本地开发使用的数据库文件 (本项目未使用，但保留是好习惯)
+*.sqlite3
+db.sqlite3
+
+# `collectstatic` 命令的输出目录
+# 这个文件夹的内容是自动生成的
+/staticfiles/
+
+# 用户上传的媒体文件
+# 这个文件夹会包含用户上传的所有图片等，不应纳入版本控制
+/mediafiles/
+
+
+### 数据库备份 ###
+# 数据库备份文件属于数据，不是代码，并且可能很大
+*.sql
+*.dump
+*.tar
+
+
+### IDE 和编辑器配置 ###
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim 临时文件
+*.swp
+*.swo
+
+
+### 操作系统生成的文件 ###
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+
+### 日志文件 ###
+*.log

@@ -1,0 +1,396 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国旧石器时代遗址分布图</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 15px;
+            background-color: #eef1f5;
+            color: #333;
+        }
+        #map_container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #controls_area {
+            padding: 0.8rem 1.5rem;
+            background-color: #ffffff;
+            border-bottom: 1px solid #d8dde3;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+            z-index: 1000;
+            flex-shrink: 0;
+        }
+        #map {
+            flex-grow: 1;
+            width: 100%;
+            z-index: 1;
+        }
+        .form-label {
+            margin-bottom: .3rem;
+            font-weight: 500;
+            color: #212529;
+            font-size: 0.85rem;
+        }
+        .form-select-sm, .form-control-sm {
+            font-size: .875rem;
+            border-radius: 0.25rem;
+        }
+        .btn {
+            border-radius: 0.25rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-group-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #343a40;
+            margin-top: 0.5rem;
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.2rem;
+            border-bottom: 1px solid #eee;
+        }
+        .leaflet-popup-content-wrapper {
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        .leaflet-popup-content {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin: 10px 15px;
+            color: #495057;
+        }
+        .leaflet-popup-content strong {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .leaflet-popup-content .btn-info {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.6rem;
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .leaflet-popup-content .btn-info:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        .leaflet-popup-tip {
+             background-color: #fff;
+             box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+        }
+        #detailsPanel {
+            position: fixed;
+            right: -420px;
+            top: 15px;
+            width: 400px;
+            max-height: calc(100vh - 30px);
+            overflow-y: auto;
+            z-index: 1001;
+            transition: right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background-color: #fff;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        #detailsPanel.visible {
+            right: 15px;
+        }
+        #detailsPanel .card-header {
+            background-color: #0d6efd;
+            color: white;
+            border-bottom: 1px solid rgba(0,0,0,0.075);
+            padding: 0.75rem 1.25rem;
+            border-top-left-radius: calc(0.375rem - 1px);
+            border-top-right-radius: calc(0.375rem - 1px);
+        }
+        #detailsPanel .card-header .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        #detailsPanel .card-body {
+            padding: 1.25rem;
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+        #detailsPanelTitle {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+        .gallery-image-container {
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+        .gallery-image {
+            width: 100%;
+            height: auto;
+            max-height: 220px;
+            object-fit: contain;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background-color: #f8f9fa;
+        }
+        .gallery-image:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .gallery-link {
+            display: block;
+            font-size: 0.85rem;
+            word-break: break-all;
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        .gallery-link:hover {
+            text-decoration: underline;
+        }
+        #detailsPanel strong {
+            color: #212529;
+            font-weight: 600;
+        }
+        #detailsPanel hr.my-2 {
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div id="map_container">
+        <div id="controls_area">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3 mb-0" style="color: #0d6efd; font-weight: 500;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-compass-fill me-2" viewBox="0 0 16 16">
+                        <path d="M15.5 8.516a7.5 7.5 0 1 1-9.462-7.24A1 1 0 0 1 7.038 0l1.966 1.966a.5.5 0 0 1 .096.149l1.07 3.192A1.5 1.5 0 0 1 10.04 6.04l3.192 1.07a.5.5 0 0 1 .149.096l1.966 1.966a1 1 0 0 1-.363 1.349Zm-3.09-2.953L6.04 10.04l-4.484-1.495a.5.5 0 0 1 .11-.936L6.04 6.04l1.495 4.484a.5.5 0 0 1-.936.11Z"/>
+                    </svg>
+                    中国旧石器时代遗址分布图
+                </h1>
+                <a href="{% url 'admin:index' %}" class="btn btn-primary btn-sm" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill me-1" viewBox="0 0 16 16">
+                        <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413-1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/>
+                    </svg>
+                    后台管理
+                </a>
+            </div>
+
+            <div class="row gx-3 gy-2 align-items-center">
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="protectionLevelFilter" class="form-label">文物保护级别:</label>
+                    <select id="protectionLevelFilter" class="form-select form-select-sm">
+                        <option value="">全部级别</option>
+                        {% for value, display in protection_levels %}
+                        <option value="{{ value }}">{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="provinceFilter" class="form-label">省份:</label>
+                    <select id="provinceFilter" class="form-select form-select-sm">
+                        <option value="">全部省份</option>
+                        {% for province in provinces %}
+                        <option value="{{ province }}">{{ province }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-12 col-sm-12">
+                    <label for="keywordSearch" class="form-label">关键词搜索:</label>
+                    <input type="text" id="keywordSearch" class="form-control form-control-sm" placeholder="名称、年代、批次等">
+                </div>
+            </div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <div id="detailsPanel" class="card">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+            <h5 id="detailsPanelTitle" class="mb-0 card-title">遗址详情</h5>
+            <button type="button" class="btn-close" aria-label="Close" onclick="hideDetailsPanel()"></button>
+        </div>
+        <div id="detailsPanelContent" class="card-body">
+            <p class="text-muted">请在地图标记点上点击“更多信息”按钮查看详情。</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                const defaultLat = 36.061641;
+                const defaultLon = 103.834321;
+                const defaultCenter = [defaultLat, defaultLon];
+                const defaultZoom = 4;
+                const minZoom = 3;
+                const maxZoom = 18;
+                const tileLayerUrl = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}';
+                const tileLayerAttribution = '&copy; <a href="https://www.amap.com/">高德地图</a>';
+                const tileLayerSubdomainsArray = ['1', '2', '3', '4'];
+                const tileLayerOptions = {
+                    attribution: tileLayerAttribution,
+                    subdomains: tileLayerSubdomainsArray
+                };
+
+                const map = L.map('map');
+                L.tileLayer(tileLayerUrl, tileLayerOptions).addTo(map);
+                map.setView(defaultCenter, defaultZoom);
+                map.options.minZoom = minZoom;
+                map.options.maxZoom = maxZoom;
+
+                if (map.attributionControl) {
+                    map.attributionControl.setPrefix('');
+                }
+
+                const smallerIcon = L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize:    [20, 33],
+                    iconAnchor:  [10, 33],
+                    popupAnchor: [0, -30],
+                    shadowSize:  [33, 33]
+                });
+
+                let currentGeoJSONLayer = null;
+                const detailsPanel = document.getElementById('detailsPanel');
+                const detailsPanelTitle = document.getElementById('detailsPanelTitle');
+                const detailsPanelContent = document.getElementById('detailsPanelContent');
+
+                window.showSiteDetails = async function(siteId) {
+                    if (!siteId) return;
+                    detailsPanelContent.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">加载中...</span></div> <span class="ms-2">正在加载详情...</span></div>';
+                    detailsPanel.classList.add('visible');
+
+                    try {
+                        const response = await fetch(`/api/sites/${siteId}/`);
+                        if (!response.ok) { throw new Error(`HTTP error! Status: ${response.status}`); }
+                        const siteData = await response.json();
+
+                        detailsPanelTitle.textContent = siteData.name || '遗址详情';
+
+                        let contentHtml = `<p class="mb-2"><strong>简介:</strong><br>${siteData.description || '暂无信息'}</p><hr class="my-2">`;
+                        contentHtml += `<p class="mb-2"><strong>发现者/单位:</strong> ${siteData.discovered_by || '暂无信息'}</p>`;
+                        contentHtml += `<p class="mb-2"><strong>发现年代/日期:</strong> ${siteData.discovery_date || '暂无信息'}</p><hr class="my-2">`;
+                        contentHtml += `<p class="mb-2"><strong>发掘信息:</strong><br>${siteData.excavation_info || '暂无信息'}</p>`;
+
+                        if (siteData.gallery_urls) {
+                            contentHtml += `<hr class="my-2"><p class="mb-1"><strong>图片画廊:</strong></p><div class="row gx-2 gy-2">`;
+                            const urls = siteData.gallery_urls.split('\n').filter(url => url.trim() !== '');
+                            if (urls.length > 0) {
+                                urls.forEach(url => {
+                                    const trimmedUrl = url.trim();
+                                    if (/\.(jpeg|jpg|gif|png|webp)$/i.test(trimmedUrl)) {
+                                        contentHtml += `
+                                            <div class="col-6 col-md-4 gallery-image-container">
+                                                <a href="${trimmedUrl}" target="_blank" title="点击查看大图">
+                                                    <img src="${trimmedUrl}" alt="遗址图片" class="gallery-image">
+                                                </a>
+                                            </div>`;
+                                    } else if (trimmedUrl) {
+                                        contentHtml += `<div class="col-12"><a href="${trimmedUrl}" target="_blank" class="gallery-link">${trimmedUrl}</a></div>`;
+                                    }
+                                });
+                            } else {
+                                contentHtml += "<div class=\"col-12 text-muted\">暂无图片。</div>";
+                            }
+                            contentHtml += `</div>`;
+                        } else {
+                             contentHtml += "<hr class=\"my-2\"><p class=\"mb-2\"><strong>图片画廊:</strong> <span class='text-muted'>暂无图片信息。</span></p>";
+                        }
+                        detailsPanelContent.innerHTML = contentHtml;
+                    } catch (error) {
+                        console.error('Error fetching site details:', error);
+                        detailsPanelContent.innerHTML = '<p class="text-danger">加载遗址详情失败，请检查网络或稍后再试。</p>';
+                    }
+                }
+
+                window.hideDetailsPanel = function() {
+                    detailsPanel.classList.remove('visible');
+                }
+
+                async function loadSites(params = {}) {
+                    const queryParams = new URLSearchParams(params);
+                    const apiUrl = `/api/sites/?${queryParams.toString()}`;
+
+                    try {
+                        const response = await fetch(apiUrl);
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error(`API HTTP error! status: ${response.status}`, errorText);
+                            throw new Error(`API HTTP error! status: ${response.status}`);
+                        }
+                        const geojsonData = await response.json();
+
+                        if (currentGeoJSONLayer && map.hasLayer(currentGeoJSONLayer)) {
+                            map.removeLayer(currentGeoJSONLayer);
+                        }
+                        currentGeoJSONLayer = null;
+
+                        if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                             currentGeoJSONLayer = L.geoJSON(geojsonData, {
+                                pointToLayer: function (feature, latlng) { // 新增：使用自定义小图标
+                                    return L.marker(latlng, { icon: smallerIcon });
+                                },
+                                onEachFeature: function (feature, layer) {
+                                    if (feature.properties && feature.properties.popup_content) {
+                                        layer.bindPopup(feature.properties.popup_content, {minWidth: 180});
+                                    }
+                                }
+                            }).addTo(map);
+                        } else {
+                             console.log('No features in GeoJSON data to display or data is empty.');
+                        }
+                    } catch (error) {
+                        console.error("无法加载遗址数据 (loadSites function):", error);
+                    }
+                }
+
+                const protectionLevelSelect = document.getElementById('protectionLevelFilter');
+                const provinceSelect = document.getElementById('provinceFilter');
+                const keywordInput = document.getElementById('keywordSearch');
+                let debounceTimer;
+
+                function getFiltersAndLoadSites() {
+                    const params = {};
+                    const protectionLevel = protectionLevelSelect.value;
+                    const province = provinceSelect.value;
+                    const keyword = keywordInput.value.trim();
+
+                    if (protectionLevel) params.protection_level = protectionLevel;
+                    if (province) params.province = province;
+                    if (keyword) params.search = keyword;
+
+                    loadSites(params);
+                    hideDetailsPanel();
+                }
+
+                protectionLevelSelect.addEventListener('change', getFiltersAndLoadSites);
+                provinceSelect.addEventListener('change', getFiltersAndLoadSites);
+
+                keywordInput.addEventListener('input', () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        getFiltersAndLoadSites();
+                    }, 500);
+                });
+
+                loadSites();
+
+            } catch (e) {
+                console.error('Global error during DOMContentLoaded or map setup:', e);
+            }
+        });
+    </script>
+</body>
+</html>
